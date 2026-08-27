@@ -1,0 +1,82 @@
+[
+  {
+    "id": 1,
+    "name": "Owolabi",
+    "age": 20,
+    "position": "Striker",
+    "jersey": 9,
+    "goals": 9,
+    "assist": 5,
+    "salary": 500000
+  },
+  {
+    "id": 2,
+    "name": "Uncle Tope",
+    "age": 17,
+    "position": "Goalkeeper",
+    "jersey": 8,
+    "goals": 1,
+    "assist": 0,
+    "salary": 250000
+  },
+  {
+    "id": 3,
+    "name": "Olaseni",
+    "age": 19,
+    "position": "Defender",
+    "jersey": 5,
+    "goals": 2,
+    "assist": 3,
+    "salary": 350000
+  },
+  {
+    "id": 4,
+    "name": "Alexander",
+    "age": 16,
+    "position": "Striker",
+    "jersey": 1,
+    "goals": 6,
+    "assist": 4,
+    "salary": 450000
+  },
+  {
+    "id": 5,
+    "name": "Femi",
+    "age": 22,
+    "position": "Winger",
+    "jersey": 7,
+    "goals": 4,
+    "assist": 6,
+    "salary": 380000
+  },
+  {
+    "id": 6,
+    "name": "Debola",
+    "age": 15,
+    "position": "Midfielder",
+    "jersey": 10,
+    "goals": 4,
+    "assist": 3,
+    "salary": 390000
+  },
+  {
+    "id": 7,
+    "name": "Fela",
+    "age": 18,
+    "position": "Defender",
+    "jersey": 3,
+    "goals": 3,
+    "assist": 2,
+    "salary": 300000
+  },
+  {
+    "id": 8,
+    "name": "Osimhen",
+    "age": 20,
+    "position": "Striker",
+    "jersey": 20,
+    "goals": 15,
+    "assist": 8,
+    "salary": 1500000
+  }
+]
