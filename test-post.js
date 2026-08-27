@@ -9,16 +9,17 @@ async function addPlayer() {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        name: "Messi",
-        age: 20,
+        name: "Osimhen",
+        age: 25,
         position: "Striker",
         jersey: 10,
-        goals: 15,
+        goals: 20,
         assist: 10,
-        salary: 1000000
+        salary: 1500000
       })
     });
 
+    
     const data = await response.json();
     console.log("✅ POST Success! Server responded:");
     console.log(JSON.stringify(data, null, 2));
