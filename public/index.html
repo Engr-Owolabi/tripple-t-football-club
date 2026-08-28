@@ -3,76 +3,67 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tripple T Football Club - Squad Management</title>
+  <title>Tripple T FC - Day 9 Complete CRUD</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header>
     <h1>⚽ Tripple T Football Club</h1>
-    <p>Squad Management System - Built by Owolabi | Full-Stack Engineer</p>
+    <p>Day 9 - Complete CRUD + Search + Validation | Built by Owolabi</p>
   </header>
 
   <div class="container">
-    <!-- Stats Cards -->
-    <div class="stats-grid" id="statsGrid">
-      <div class="stat-card"><h3>Loading...</h3><div class="value">...</div></div>
-    </div>
+    <div class="stats-grid" id="statsGrid"></div>
 
-    <!-- Add Player Form -->
     <section class="form-section">
       <h2>➕ Add New Player</h2>
       <form id="addPlayerForm">
-        <input type="text" id="name" placeholder="Name (e.g., Osimhen)" required>
-        <input type="number" id="age" placeholder="Age" required>
-        <input type="text" id="position" placeholder="Position (Striker, Defender...)" required>
-        <input type="number" id="jersey" placeholder="Jersey Number">
-        <input type="number" id="goals" placeholder="Goals">
-        <input type="number" id="assist" placeholder="Assists">
-        <input type="number" id="salary" placeholder="Salary (e.g., 500000)">
-        <button type="submit">Add Player to Squad</button>
+        <input type="text" id="name" placeholder="Name" required>
+        <input type="number" id="age" placeholder="Age" min="0" max="100" required>
+        <input type="text" id="position" placeholder="Position" required>
+        <input type="number" id="jersey" placeholder="Jersey" min="1" max="99">
+        <input type="number" id="goals" placeholder="Goals" min="0">
+        <input type="number" id="assist" placeholder="Assists" min="0">
+        <input type="number" id="salary" placeholder="Salary" min="0">
+        <button type="submit">Add Player</button>
       </form>
     </section>
 
-    <!-- Filters -->
+    <section class="form-section">
+      <h2>🔍 Search Players</h2>
+      <div style="display: flex; gap: 0.5rem;">
+        <input type="text" id="searchInput" placeholder="Search by name (e.g., Owolabi, Adorable)" style="flex:1; padding:0.7rem; border:1px solid #ddd; border-radius:8px;">
+        <button onclick="searchPlayers()" style="padding:0.7rem 1.2rem; background:#1e3c72; color:white; border:none; border-radius:8px; cursor:pointer;">Search</button>
+        <button onclick="loadPlayers('all')" style="padding:0.7rem 1.2rem; background:#6c757d; color:white; border:none; border-radius:8px; cursor:pointer;">Clear</button>
+      </div>
+    </section>
+
     <div class="filters">
       <button onclick="loadPlayers('all')" class="active" id="btn-all">All Players</button>
       <button onclick="loadPlayers('eligible')" id="btn-eligible">✅ Eligible</button>
-      <button onclick="loadPlayers('waiting')" id="btn-waiting">⏳ Waiting List</button>
+      <button onclick="loadPlayers('waiting')" id="btn-waiting">⏳ Waiting</button>
       <button onclick="loadPlayers('top-scorer')" id="btn-top">🏆 Top Scorer</button>
     </div>
 
-    <!-- Squad Table -->
     <section class="table-section">
       <h2 id="tableTitle">Full Squad</h2>
       <div class="table-wrapper">
         <table id="squadTable">
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Name</th>
-              <th>Age</th>
-              <th>Position</th>
-              <th>Jersey</th>
-              <th>Goals</th>
-              <th>Assist</th>
-              <th>Salary</th>
-              <th>Status</th>
+              <th>ID</th><th>Name</th><th>Age</th><th>Position</th><th>Jersey</th><th>Goals</th><th>Assist</th><th>Salary</th><th>Status</th><th>Actions</th>
             </tr>
           </thead>
-          <tbody id="squadBody">
-            <tr><td colspan="9">Loading squad...</td></tr>
-          </tbody>
+          <tbody id="squadBody"></tbody>
         </table>
       </div>
     </section>
   </div>
 
   <footer>
-    <p>Built with Node.js + Express + Vanilla JS | Engr-Owolabi | Day 5 Full-Stack</p>
-    <p>API: <a href="/api/players" target="_blank">/api/players</a> | <a href="/api/stats" target="_blank">/api/stats</a> | GitHub: <a href="https://github.com/Engr-Owolabi/tripple-t-football-club" target="_blank">Engr-Owolabi/tripple-t-football-club</a></p>
+    <p>Day 9 Complete CRUD | Engr-Owolabi | <a href="/api/players" target="_blank">API</a> | <a href="https://github.com/Engr-Owolabi/tripple-t-football-club" target="_blank">GitHub</a></p>
   </footer>
 
   <script src="app.js"></script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a31d18c5ff867ddd',t:'MTc4Nzg1NDg5NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f"}' crossorigin="anonymous"></script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3253ebd792b33b1',t:'MTc4Nzk0MDMzNg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
