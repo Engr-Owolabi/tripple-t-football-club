@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const mongoose = require('mongoose');
-const Player = require('./models/Player');
+const Player = require('./models/player');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -50,6 +50,14 @@ app.get('/api/stats', async (req, res) => {
   const totalAssists = players.reduce((sum, p) => sum + p.assist, 0);
   const topScorer = players.reduce((best, p) => p.goals > best.goals ? p : best, players[0] || { name: 'None', goals: 0 });
   res.json({ totalPlayers: players.length, totalSalary, totalSalaryFormatted: `N${totalSalary.toLocaleString()}`, averageSalary: players.length ? Math.round(totalSalary / players.length) : 0, totalGoals, totalAssists, topScorer: topScorer.name, topScorerGoals: topScorer.goals });
+});
+
+app.get('/api/players/search', async (req, res) => {
+  const { name } = req.query;
+  let query = {};
+  if (name) query.name = { $regex: name, $options: 'i' };
+  const players = await Player.find(query);
+  res.json({ total: players.length, players });
 });
 
 app.get('/api/players/:id', async (req, res) => {
