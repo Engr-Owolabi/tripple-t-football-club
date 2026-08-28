@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const mongoose = require('mongoose');
-const Player = require('./models/player'); // lowercase to match file on GitHub
+const Player = require('./models/Player'); // lowercase to match file on GitHub
 
 const app = express();
 const PORT = process.env.PORT || 3001;
