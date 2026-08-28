@@ -11,7 +11,7 @@ const MONGODB_URI = process.env.MONGODB_URI;
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'client', 'dist')));
 
 mongoose.connect(MONGODB_URI)
   .then(() => console.log('✅ Connected to MongoDB Atlas!'))
@@ -83,9 +83,7 @@ app.delete('/api/players/:id', async (req, res) => {
   res.json({ message: `Deleted ${player.name}`, totalPlayers: await Player.countDocuments() });
 });
 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'client', 'dist', 'index.html')));
 
 app.listen(PORT, () => {
   console.log(`\n⚽ Tripple T running at http://localhost:${PORT}`);
