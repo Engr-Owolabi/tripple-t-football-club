@@ -43,12 +43,18 @@ function App() {
         const res = await axios.get('/api/players/top-scorer');
         setPlayers([res.data]);
         return;
-      } catch (e) { return; }
+      } catch (e) { 
+        console.error('Top scorer error', e);
+        return; 
+      }
     }
 
     try {
       const res = await axios.get(url);
-      setPlayers(res.data.players || res.data);
+      const data = res.data;
+      const playersData = data.players || data;
+      console.log('Loaded players:', playersData.length);
+      setPlayers(playersData);
     } catch (err) {
       console.error('Failed to load players', err);
     }
@@ -129,9 +135,10 @@ function App() {
     }
     try {
       const res = await axios.get(`/api/players/search?name=${encodeURIComponent(searchTerm)}`);
-      setPlayers(res.data.players);
+      console.log('Search results:', res.data);
+      setPlayers(res.data.players || []);
     } catch (err) {
-      console.error(err);
+      console.error('Search error', err);
     }
   }
 
@@ -153,7 +160,7 @@ function App() {
             <div className="stat-card">
               <h3>Total Salary</h3>
               <div className="value">{stats.totalSalaryFormatted}</div>
-              <div className="sub">Avg: N{stats.averageSalary.toLocaleString()}</div>
+              <div className="sub">Avg: N{stats.averageSalary?.toLocaleString()}</div>
             </div>
             <div className="stat-card">
               <h3>Top Scorer</h3>
@@ -162,8 +169,8 @@ function App() {
             </div>
             <div className="stat-card">
               <h3>Best Assist</h3>
-              <div className="value">{stats.bestAssist?.name}</div>
-              <div className="sub">{stats.bestAssist?.assist} assists</div>
+              <div className="value">{stats.bestAssist?.name || 'N/A'}</div>
+              <div className="sub">{stats.bestAssist?.assist || 0} assists</div>
             </div>
           </div>
         )}
@@ -208,26 +215,35 @@ function App() {
                 </tr>
               </thead>
               <tbody>
-                {players.map(p => {
-                  const isEligible = p.age >= 18;
-                  return (
-                    <tr key={p._id || p.id}>
-                      <td>{p._id ? p._id.slice(-4) : p.id}</td>
-                      <td><strong>{p.name}</strong></td>
-                      <td>{p.age}</td>
-                      <td>{p.position}</td>
-                      <td>{p.jersey}</td>
-                      <td>{p.goals}</td>
-                      <td>{p.assist}</td>
-                      <td>N{p.salary.toLocaleString()}</td>
-                      <td>{isEligible ? <span className="badge badge-eligible">Eligible</span> : <span className="badge badge-waiting">{p.yearsToWait ? `${p.yearsToWait}y wait` : 'Waiting'}</span>}</td>
-                      <td>
-                        <button onClick={() => handleEdit(p._id || p.id)} className="edit-btn">✏️ Edit</button>
-                        <button onClick={() => handleDelete(p._id || p.id, p.name)} className="delete-btn">🗑️ Delete</button>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {players.length === 0 ? (
+                  <tr><td colSpan="10">No players found. Check console for errors.</td></tr>
+                ) : (
+                  players.map(p => {
+                    const isEligible = p.age >= 18;
+                    // Safe checks to prevent crash!
+                    const displayId = p._id ? p._id.slice(-4) : (p.id || 'N/A');
+                    const displaySalary = p.salary ? `N${p.salary.toLocaleString()}` : 'N0';
+                    const displayName = p.name || 'Unknown';
+                    
+                    return (
+                      <tr key={p._id || p.id || Math.random()}>
+                        <td>{displayId}</td>
+                        <td><strong>{displayName}</strong></td>
+                        <td>{p.age ?? 'N/A'}</td>
+                        <td>{p.position || 'N/A'}</td>
+                        <td>{p.jersey ?? 'N/A'}</td>
+                        <td>{p.goals ?? 0}</td>
+                        <td>{p.assist ?? 0}</td>
+                        <td>{displaySalary}</td>
+                        <td>{isEligible ? <span className="badge badge-eligible">Eligible</span> : <span className="badge badge-waiting">{p.yearsToWait ? `${p.yearsToWait}y wait` : 'Waiting'}</span>}</td>
+                        <td>
+                          <button onClick={() => handleEdit(p._id || p.id)} className="edit-btn">✏️ Edit</button>
+                          <button onClick={() => handleDelete(p._id || p.id, p.name)} className="delete-btn">🗑️ Delete</button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
