@@ -1,136 +1,78 @@
-// Server using config.js - SINGLE PLACE FOR CREDENTIALS!
-// This version uses config.js instead of .env for simplicity
-
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const mongoose = require('mongoose');
-const config = require('./config'); // Our single config file!
 const Player = require('./models/Player');
 
 const app = express();
-const PORT = config.PORT;
+const PORT = process.env.PORT || 3001;
+const MONGODB_URI = process.env.MONGODB_URI;
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Connect to MongoDB using config.js
-mongoose.connect(config.MONGODB_URI)
-  .then(() => console.log('✅ Connected to MongoDB Atlas via config.js!'))
-  .catch(err => console.error('❌ MongoDB connection error:', err.message));
-
-function canEnterClub(age) { return age >= 18; }
+mongoose.connect(MONGODB_URI)
+  .then(() => console.log('✅ Connected to MongoDB Atlas!'))
+  .catch(err => console.error('❌ MongoDB error:', err.message));
 
 app.get('/api/players', async (req, res) => {
-  try {
-    const players = await Player.find().sort({ goals: -1 });
-    res.json({ total: players.length, players });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  const players = await Player.find().sort({ goals: -1 });
+  res.json({ total: players.length, players });
 });
 
 app.get('/api/players/eligible', async (req, res) => {
-  try {
-    const players = await Player.find({ age: { $gte: 18 } });
-    res.json({ total: players.length, players });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  const players = await Player.find({ age: { $gte: 18 } });
+  res.json({ total: players.length, players });
 });
 
 app.get('/api/players/waiting', async (req, res) => {
-  try {
-    const players = await Player.find({ age: { $lt: 18 } });
-    const waiting = players.map(p => ({
-      ...p.toObject(),
-      yearsToWait: 18 - p.age,
-      willJoinIn: new Date().getFullYear() + (18 - p.age)
-    }));
-    res.json({ total: waiting.length, players: waiting });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  const players = await Player.find({ age: { $lt: 18 } });
+  const waiting = players.map(p => ({ ...p.toObject(), yearsToWait: 18 - p.age, willJoinIn: new Date().getFullYear() + (18 - p.age) }));
+  res.json({ total: waiting.length, players: waiting });
 });
 
 app.get('/api/players/top-scorer', async (req, res) => {
-  try {
-    const top = await Player.findOne().sort({ goals: -1 });
-    res.json(top);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  const top = await Player.findOne().sort({ goals: -1 });
+  res.json(top);
 });
 
 app.get('/api/players/best-assist', async (req, res) => {
-  try {
-    const best = await Player.findOne().sort({ assist: -1 });
-    res.json(best);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  const best = await Player.findOne().sort({ assist: -1 });
+  res.json(best);
 });
 
 app.get('/api/stats', async (req, res) => {
-  try {
-    const players = await Player.find();
-    const totalSalary = players.reduce((sum, p) => sum + p.salary, 0);
-    const totalGoals = players.reduce((sum, p) => sum + p.goals, 0);
-    const totalAssists = players.reduce((sum, p) => sum + p.assist, 0);
-    const topScorer = players.reduce((best, p) => p.goals > best.goals ? p : best, players[0] || { name: 'None', goals: 0 });
-    res.json({
-      totalPlayers: players.length,
-      totalSalary,
-      totalSalaryFormatted: `N${totalSalary.toLocaleString()}`,
-      averageSalary: players.length > 0 ? Math.round(totalSalary / players.length) : 0,
-      totalGoals,
-      totalAssists,
-      topScorer: topScorer.name,
-      topScorerGoals: topScorer.goals
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  const players = await Player.find();
+  const totalSalary = players.reduce((sum, p) => sum + p.salary, 0);
+  const totalGoals = players.reduce((sum, p) => sum + p.goals, 0);
+  const totalAssists = players.reduce((sum, p) => sum + p.assist, 0);
+  const topScorer = players.reduce((best, p) => p.goals > best.goals ? p : best, players[0] || { name: 'None', goals: 0 });
+  res.json({ totalPlayers: players.length, totalSalary, totalSalaryFormatted: `N${totalSalary.toLocaleString()}`, averageSalary: players.length ? Math.round(totalSalary / players.length) : 0, totalGoals, totalAssists, topScorer: topScorer.name, topScorerGoals: topScorer.goals });
 });
 
 app.get('/api/players/:id', async (req, res) => {
-  try {
-    const player = await Player.findById(req.params.id);
-    if (!player) return res.status(404).json({ error: 'Player not found' });
-    res.json(player);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  const player = await Player.findById(req.params.id);
+  if (!player) return res.status(404).json({ error: 'Not found' });
+  res.json(player);
 });
 
 app.post('/api/players', async (req, res) => {
-  try {
-    const player = await Player.create(req.body);
-    res.status(201).json({ message: 'Player added and saved to MongoDB!', player, totalPlayers: await Player.countDocuments() });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
+  const player = await Player.create(req.body);
+  res.status(201).json({ message: 'Player added!', player, totalPlayers: await Player.countDocuments() });
 });
 
 app.put('/api/players/:id', async (req, res) => {
-  try {
-    const player = await Player.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
-    if (!player) return res.status(404).json({ error: 'Player not found' });
-    res.json({ message: `Player ${player.name} updated`, player });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
+  const player = await Player.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+  if (!player) return res.status(404).json({ error: 'Not found' });
+  res.json({ message: 'Updated', player });
 });
 
 app.delete('/api/players/:id', async (req, res) => {
-  try {
-    const player = await Player.findByIdAndDelete(req.params.id);
-    if (!player) return res.status(404).json({ error: 'Player not found' });
-    res.json({ message: `Player ${player.name} deleted`, totalPlayers: await Player.countDocuments() });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  const player = await Player.findByIdAndDelete(req.params.id);
+  if (!player) return res.status(404).json({ error: 'Not found' });
+  res.json({ message: `Deleted ${player.name}`, totalPlayers: await Player.countDocuments() });
 });
 
 app.get('/', (req, res) => {
@@ -138,9 +80,7 @@ app.get('/', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`\n⚽ Tripple T with config.js running at http://localhost:${PORT}`);
-  console.log(`💾 Database: MongoDB Atlas Cloud via config.js`);
-  console.log(`👤 Username: ${config.USERNAME}`);
-  console.log(`🏠 Cluster: ${config.CLUSTER}`);
+  console.log(`\n⚽ Tripple T running at http://localhost:${PORT}`);
+  console.log(`💾 MongoDB Atlas via process.env.MONGODB_URI`);
   console.log(`🌐 Website: http://localhost:${PORT}\n`);
 });
