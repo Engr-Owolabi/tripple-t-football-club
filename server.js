@@ -3,7 +3,11 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const mongoose = require('mongoose');
-const Player = require('./models/Player'); // lowercase to match file on GitHub
+const Player = require('./models/Player');
+
+// NEW - Auth imports with clear names!
+const authRoutes = require('./routes/authRoutes');
+const { protect } = require('./middleware/authMiddleware');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -17,12 +21,13 @@ mongoose.connect(MONGODB_URI)
   .then(() => console.log('✅ Connected to MongoDB Atlas!'))
   .catch(err => console.error('❌ MongoDB error:', err.message));
 
-// SEARCH - Must be BEFORE :id route! Fixed with better error handling
+// NEW - Auth routes - Public!
+app.use('/api/auth', authRoutes);
+
+// SEARCH - Must be BEFORE :id route!
 app.get('/api/players/search', async (req, res) => {
   try {
     const { name, position } = req.query;
-    console.log(`🔍 Search query: name=${name}, position=${position}`);
-    
     let query = {};
     if (name && name.trim() !== '') {
       query.name = { $regex: name.trim(), $options: 'i' };
@@ -30,18 +35,14 @@ app.get('/api/players/search', async (req, res) => {
     if (position && position.trim() !== '') {
       query.position = { $regex: position.trim(), $options: 'i' };
     }
-    
-    // If no query, return all
     if (Object.keys(query).length === 0) {
       const players = await Player.find().sort({ goals: -1 });
       return res.json({ total: players.length, players });
     }
-    
     const players = await Player.find(query).sort({ goals: -1 });
-    console.log(`🔍 Found ${players.length} players for query`, query);
     res.json({ total: players.length, players });
   } catch (err) {
-    console.error('❌ Search error:', err.message);
+    console.error('Search error:', err.message);
     res.status(500).json({ error: 'Search failed: ' + err.message });
   }
 });
@@ -118,19 +119,18 @@ app.get('/api/stats', async (req, res) => {
   }
 });
 
-// SINGLE PLAYER BY ID - Must be AFTER search route!
 app.get('/api/players/:id', async (req, res) => {
   try {
     const player = await Player.findById(req.params.id);
     if (!player) return res.status(404).json({ error: 'Player not found' });
     res.json(player);
   } catch (err) {
-    console.error('Find by ID error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-app.post('/api/players', async (req, res) => {
+// PROTECTED ROUTES - Only logged-in coaches can add/edit/delete!
+app.post('/api/players', protect, async (req, res) => {
   try {
     const player = await Player.create(req.body);
     res.status(201).json({ message: 'Player added!', player, totalPlayers: await Player.countDocuments() });
@@ -139,7 +139,7 @@ app.post('/api/players', async (req, res) => {
   }
 });
 
-app.put('/api/players/:id', async (req, res) => {
+app.put('/api/players/:id', protect, async (req, res) => {
   try {
     const player = await Player.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
     if (!player) return res.status(404).json({ error: 'Player not found' });
@@ -149,7 +149,7 @@ app.put('/api/players/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/players/:id', async (req, res) => {
+app.delete('/api/players/:id', protect, async (req, res) => {
   try {
     const player = await Player.findByIdAndDelete(req.params.id);
     if (!player) return res.status(404).json({ error: 'Player not found' });
@@ -159,11 +159,13 @@ app.delete('/api/players/:id', async (req, res) => {
   }
 });
 
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'client', 'dist', 'index.html')));
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client', 'dist', 'index.html'));
+});
 
 app.listen(PORT, () => {
-  console.log(`\n⚽ Tripple T with fixed search running at http://localhost:${PORT}`);
-  console.log(`🔍 Search: http://localhost:${PORT}/api/players/search?name=Owolabi`);
+  console.log(`\n⚽ Tripple T with Auth running at http://localhost:${PORT}`);
+  console.log(`🔐 Auth: POST /api/auth/register, POST /api/auth/login`);
   console.log(`💾 MongoDB Atlas via process.env.MONGODB_URI`);
   console.log(`🌐 Website: http://localhost:${PORT}\n`);
 });

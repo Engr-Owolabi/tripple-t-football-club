@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import './App.css';
 
 function App() {
@@ -10,22 +9,30 @@ function App() {
   const [formData, setFormData] = useState({
     name: '', age: '', position: '', jersey: '', goals: '', assist: '', salary: ''
   });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('App mounted, loading data...');
     loadPlayers();
     loadStats();
   }, []);
 
   async function loadStats() {
     try {
-      const res = await axios.get('/api/stats');
-      const topRes = await axios.get('/api/players/top-scorer');
-      const assistRes = await axios.get('/api/players/best-assist');
+      const res = await fetch('/api/stats');
+      const data = await res.json();
+      console.log('Stats loaded:', data);
+      
+      const topRes = await fetch('/api/players/top-scorer');
+      const topData = await topRes.json();
+      
+      const assistRes = await fetch('/api/players/best-assist');
+      const assistData = await assistRes.json();
       
       setStats({
-        ...res.data,
-        topScorer: topRes.data,
-        bestAssist: assistRes.data
+        ...data,
+        topScorer: topData,
+        bestAssist: assistData
       });
     } catch (err) {
       console.error('Failed to load stats', err);
@@ -33,6 +40,7 @@ function App() {
   }
 
   async function loadPlayers(filterType = 'all') {
+    setLoading(true);
     setFilter(filterType);
     let url = '/api/players';
     
@@ -40,23 +48,35 @@ function App() {
     else if (filterType === 'waiting') url = '/api/players/waiting';
     else if (filterType === 'top-scorer') {
       try {
-        const res = await axios.get('/api/players/top-scorer');
-        setPlayers([res.data]);
+        const res = await fetch('/api/players/top-scorer');
+        const player = await res.json();
+        console.log('Top scorer loaded:', player);
+        setPlayers([player]);
+        setLoading(false);
         return;
       } catch (e) { 
         console.error('Top scorer error', e);
+        setLoading(false);
         return; 
       }
     }
 
     try {
-      const res = await axios.get(url);
-      const data = res.data;
-      const playersData = data.players || data;
-      console.log('Loaded players:', playersData.length);
+      console.log(`Fetching ${url}...`);
+      const res = await fetch(url);
+      const data = await res.json();
+      console.log(`Response from ${url}:`, data);
+      
+      // Handle both {total, players} and direct array
+      const playersData = data.players ? data.players : (Array.isArray(data) ? data : []);
+      console.log(`Loaded ${playersData.length} players from ${url}`);
+      
       setPlayers(playersData);
+      setLoading(false);
     } catch (err) {
-      console.error('Failed to load players', err);
+      console.error(`Failed to load players from ${url}`, err);
+      setPlayers([]);
+      setLoading(false);
     }
   }
 
@@ -73,13 +93,24 @@ function App() {
         salary: parseInt(formData.salary) || 200000
       };
 
-      const res = await axios.post('/api/players', newPlayer);
-      alert(`✅ ${res.data.message} - ${newPlayer.name} added!`);
-      setFormData({ name: '', age: '', position: '', jersey: '', goals: '', assist: '', salary: '' });
-      loadPlayers('all');
-      loadStats();
+      const res = await fetch('/api/players', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newPlayer)
+      });
+      
+      const data = await res.json();
+      
+      if (res.ok) {
+        alert(`✅ ${data.message} - ${newPlayer.name} added!`);
+        setFormData({ name: '', age: '', position: '', jersey: '', goals: '', assist: '', salary: '' });
+        loadPlayers('all');
+        loadStats();
+      } else {
+        alert(`❌ Error: ${data.error}`);
+      }
     } catch (err) {
-      alert(`❌ Error: ${err.response?.data?.error || err.message}`);
+      alert(`❌ Error: ${err.message}`);
     }
   }
 
@@ -106,12 +137,21 @@ function App() {
     }
     
     try {
-      const res = await axios.put(`/api/players/${id}`, { [field.toLowerCase()]: parsedValue });
-      alert(`✅ Updated ${res.data.player.name}: ${field} = ${parsedValue}`);
-      loadPlayers(filter);
-      loadStats();
+      const res = await fetch(`/api/players/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field.toLowerCase()]: parsedValue })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`✅ Updated ${data.player.name}: ${field} = ${parsedValue}`);
+        loadPlayers(filter);
+        loadStats();
+      } else {
+        alert(`❌ Error: ${data.error}`);
+      }
     } catch (err) {
-      alert(`❌ Error: ${err.response?.data?.error || err.message}`);
+      alert('Failed to update');
     }
   }
 
@@ -119,12 +159,17 @@ function App() {
     if (!confirm(`Delete ${name}? Are you sure? This cannot be undone!`)) return;
     
     try {
-      const res = await axios.delete(`/api/players/${id}`);
-      alert(`✅ ${res.data.message}`);
-      loadPlayers('all');
-      loadStats();
+      const res = await fetch(`/api/players/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`✅ ${data.message}`);
+        loadPlayers('all');
+        loadStats();
+      } else {
+        alert(`❌ ${data.error}`);
+      }
     } catch (err) {
-      alert(`❌ Error: ${err.response?.data?.error || err.message}`);
+      alert('Failed to delete');
     }
   }
 
@@ -134,9 +179,11 @@ function App() {
       return;
     }
     try {
-      const res = await axios.get(`/api/players/search?name=${encodeURIComponent(searchTerm)}`);
-      console.log('Search results:', res.data);
-      setPlayers(res.data.players || []);
+      console.log(`Searching for: ${searchTerm}`);
+      const res = await fetch(`/api/players/search?name=${encodeURIComponent(searchTerm)}`);
+      const data = await res.json();
+      console.log('Search results:', data);
+      setPlayers(data.players || []);
     } catch (err) {
       console.error('Search error', err);
     }
@@ -146,7 +193,7 @@ function App() {
     <div className="app">
       <header>
         <h1>⚽ Tripple T Football Club</h1>
-        <p>Day 10-11 - MERN Stack with React | Built by Owolabi | Full-Stack Engineer</p>
+        <p>Day 10-11 - MERN Stack with React | Built by Owolabi | Full-Stack Engineer | {loading ? 'Loading...' : `${players.length} players loaded`}</p>
       </header>
 
       <div className="container">
@@ -206,7 +253,7 @@ function App() {
         </div>
 
         <section className="table-section">
-          <h2>Full Squad - {players.length} Players</h2>
+          <h2>Full Squad - {players.length} Players {loading ? '(Loading...)' : ''}</h2>
           <div className="table-wrapper">
             <table>
               <thead>
@@ -215,12 +262,13 @@ function App() {
                 </tr>
               </thead>
               <tbody>
-                {players.length === 0 ? (
-                  <tr><td colSpan="10">No players found. Check console for errors.</td></tr>
+                {loading ? (
+                  <tr><td colSpan="10">Loading players from MongoDB...</td></tr>
+                ) : players.length === 0 ? (
+                  <tr><td colSpan="10">No players found. API returned 0. Check console (F12) for logs. API: /api/players should return 10 players. Current filter: {filter}</td></tr>
                 ) : (
                   players.map(p => {
                     const isEligible = p.age >= 18;
-                    // Safe checks to prevent crash!
                     const displayId = p._id ? p._id.slice(-4) : (p.id || 'N/A');
                     const displaySalary = p.salary ? `N${p.salary.toLocaleString()}` : 'N0';
                     const displayName = p.name || 'Unknown';
@@ -251,7 +299,7 @@ function App() {
       </div>
 
       <footer>
-        <p>Day 10-11 MERN Stack with React | Engr-Owolabi | <a href="/api/players" target="_blank">API</a> | <a href="https://github.com/Engr-Owolabi/tripple-t-football-club" target="_blank">GitHub</a> | Live: 10 players, N8.5M, Adorable 30 goals</p>
+        <p>Day 10-11 MERN Stack with React | Engr-Owolabi | <a href="/api/players" target="_blank">API: 10 players</a> | <a href="https://github.com/Engr-Owolabi/tripple-t-football-club" target="_blank">GitHub: 20 commits</a> | Live: Adorable 30 goals</p>
       </footer>
     </div>
   );
